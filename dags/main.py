@@ -23,11 +23,13 @@ with DAG(
     catchup=True,
     tags=['api', 'movie'],
 ) as dag:
-    REQUIREMENTS = []
+    
+    REQUIREMENTS = ["git+https://github.com/cho6019/movie.git@0.1.0"]
     BASE_DIR = "~/data/movies/dailyboxoffice"
 
     def branch_fun(ds_nodash):
         import os
+        check_path = os.path.expanduser(f'{BASE_DIR}/dt={ds_nodash}')
         if os.path.exists(f"{BASE_DIR}/dt={ds_nodash}"):
             return rm_dir.task_id
         else : 
@@ -49,9 +51,16 @@ with DAG(
         system_site_packages=False,
         requirements=REQUIREMENTS,
     )
+    
+    
 
-    def common_get_data(ds_nodash, url_param):
+    def common_get_data(ds_nodash, url_param, base_path):
+        from movie.api.call import call_api, list2df, save_df
         print(ds_nodash, url_param)
+        data = call_api(ds_nodash, url_param)
+        df = list2df(data, ds_nodash)
+        save_path = save_df(df, base_path)
+        print (save_path, url_param)
     
     multi_y = PythonVirtualenvOperator(
         task_id='multi.y',
@@ -59,7 +68,8 @@ with DAG(
         system_site_packages=False,
         requirements=REQUIREMENTS,
         op_kwargs={
-            "url_param": {"multiMovieYn": "Y"}
+            "url_param": {"multiMovieYn": "Y"},
+            "base_path": BASE_DIR
         }
     )
 
@@ -69,7 +79,8 @@ with DAG(
         system_site_packages=False,
         requirements=REQUIREMENTS,
         op_kwargs={
-            "url_param": {"multiMovieYn": "N"}
+            "url_param": {"multiMovieYn": "N"},
+            "base_path": BASE_DIR
         }
     )
 
@@ -79,7 +90,8 @@ with DAG(
         system_site_packages=False,
         requirements=REQUIREMENTS,
         op_kwargs={
-            "url_param": {"repNationCd": "K"}
+            "url_param": {"repNationCd": "K"},
+            "base_path": BASE_DIR
         }
     )
 
@@ -87,9 +99,10 @@ with DAG(
         task_id='nation.f',
         python_callable=common_get_data,
         system_site_packages=False,
-        requirements=[REQUIREMENTS],
+        requirements=REQUIREMENTS,
         op_kwargs={
-            "url_param": {"repNationCd": "F"}
+            "url_param": {"repNationCd": "F"},
+            "base_path": BASE_DIR
         }
     )
     
@@ -97,15 +110,17 @@ with DAG(
         task_id='no.param',
         python_callable=common_get_data,
         system_site_packages=False,
-        requirements=[REQUIREMENTS],
+        requirements=REQUIREMENTS,
         op_kwargs={
-            "url_param": {}
+            "url_param": {},
+            "base_path": BASE_DIR
         }
     )
 
     rm_dir = BashOperator(task_id='rm.dir',
-                          bash_command='rm -rf $BASE_DIR/dt={{ ds_nodash }}',
-                          env={'BASE_DIR': BASE_DIR})
+                          bash_command=f'rm -rf {BASE_DIR}' + '/dt={{ ds_nodash }}',
+                          # env={'BASE_DIR': BASE_DIR}
+                          )
 
     echo_task = BashOperator(
         task_id='echo.task',
@@ -115,6 +130,8 @@ with DAG(
     start = EmptyOperator(task_id='start')
     end = EmptyOperator(task_id='end')
     get_start = EmptyOperator(task_id='get.start')
+    
+    
     get_end = EmptyOperator(task_id='get.end')
     
 

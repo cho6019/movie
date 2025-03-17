@@ -24,14 +24,23 @@ def call_api(dt='20120101', url_param={}):
         return respond.json()['boxOfficeResult']["dailyBoxOfficeList"]
     else: return None
 
-def list2df(data=[], ymd="20120101"):
-    result = pd.DataFrame(data)
-    result['dt'] = ymd
-    return result
+def list2df(data: list, dt: str, url_params={}):
+    df = pd.DataFrame(data)
+    df['dt'] = dt
+    for k, v in url_params.items():
+        df[k] = v
+        
+    num_cols=['rnum', 'rank', 'rankInten', 'salesAmt', 'audiCnt',
+             'audiAcc', 'scrnCnt', 'showCnt', 'salesShare', 'salesInten', 'salesChange',
+             'audiInten', 'audiChange']
+    df[num_cols] = df[num_cols].apply(pd.to_numeric)
+    return df
 
-def save_df(df: pd.DataFrame, path: str):
-    df.to_parquet(path, partition_cols=['dt'])
-    save_path = f"{path}/dt={df['dt'][0]}"
+def save_df(df: pd.DataFrame, path, partitions=['dt']):
+    df.to_parquet(path, partition_cols=partitions)
+    save_path = path
+    for p in partitions:
+        save_path = save_path + f"/{p}={df[p][0]}"
     return save_path
 
 def list2df_check_num(df: pd.DataFrame, l=num_cols):

@@ -47,6 +47,19 @@ def test_save_df():
     assert 'dt' not in read_df.columns
     assert 'dt' in pd.read_parquet(base_path).columns
     
+def test_save_df_url_params():
+    ymd = "20210101"
+    url_params={'multiMovieYn': 'Y'}
+    
+    data = call_api(ymd, url_params)
+    df = list2df(data, ymd, url_params)
+    base_path = "~/temp/movie"
+    r = save_df(df, base_path, ['dt'] + list(url_params.keys()))
+    assert r == f"{base_path}/dt={ymd}"
+    read_df = pd.read_parquet(r)
+    assert 'dt' not in read_df.columns
+    assert 'dt' in pd.read_parquet(base_path).columns
+    
 def test_list2df_check_num():
     num_cols=['rnum', 'rank', 'rankInten', 'salesAmt', 'audiCnt',
              'audiAcc', 'scrnCnt', 'showCnt', 'salesShare', 'salesInten', 'salesChange',
@@ -57,5 +70,3 @@ def test_list2df_check_num():
     for c in num_cols:
         assert is_numeric_dtype(df[c]), f'{c}가 숫자가 아님'
         # assert df[c].dtype in ['int64', 'float64']
-    
-    
