@@ -19,7 +19,7 @@ with DAG(
     description='movie',
     schedule="10 10 * * *",
     start_date=datetime(2024, 1, 1),
-    end_date=datetime(2024, 12, 31),
+    end_date=datetime(2024, 1, 10),
     catchup=True,
     tags=['api', 'movie'],
 ) as dag:
@@ -29,11 +29,11 @@ with DAG(
 
     def branch_fun(ds_nodash):
         import os
-        check_path = os.path.expanduser(f'{BASE_DIR}/dt={ds_nodash}')
-        if os.path.exists(f"{BASE_DIR}/dt={ds_nodash}"):
+        check_path = os.path.expanduser(f'{BASE_DIR}/{ds_nodash}')
+        if os.path.exists(check_path):
             return rm_dir.task_id
         else : 
-            return "get.start", "echo.task"    
+            return "get.start", "echo.task"
 
     branch_op = BranchPythonOperator(
         task_id="branch.op",
@@ -58,8 +58,15 @@ with DAG(
         from movie.api.call import call_api, list2df, save_df
         print(ds_nodash, url_param)
         data = call_api(ds_nodash, url_param)
-        df = list2df(data, ds_nodash)
-        save_path = save_df(df, base_path)
+        df = list2df(data, ds_nodash, url_param)
+        partitions = ['dt'] + list(url_param.keys())
+        save_path = save_df(df, base_path, partitions)
+        
+        print("::group::movie df save")
+        print("save_path ---->" + save_path)
+        print("url_param ---->" + str(url_param))
+        print("ds_nodash--->" + ds_nodash)
+        print("::endgroup::")
         print (save_path, url_param)
     
     multi_y = PythonVirtualenvOperator(
