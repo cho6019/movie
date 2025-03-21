@@ -5,7 +5,7 @@ description = "Default template for PDM package"
 authors = [
     {name = "cho6019", email = "j01040864205@gmail.com"},
 ]
-dependencies = ["requests>=2.32.3", "pandas>=2.2.3", "pyarrow>=19.0.1", "airflow>=0.6", "apache-airflow>=2.7.2"]
+dependencies = ["requests>=2.32.3", "pandas>=2.2.3", "pyarrow>=19.0.1"]
 requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}

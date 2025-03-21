@@ -1,6 +1,6 @@
 from movie.api.call import (
     gen_url, call_api, list2df, save_df,
-    fill_na_with_column, gen_unique, re_ranking
+    fill_na_with_column, gen_unique, re_ranking, combine_unique_parquet
 )
 import os
 import pandas as pd
@@ -80,3 +80,8 @@ def test_merge_df():
     
     new_ranking_df = re_ranking(unique_df)
     assert new_ranking_df.iloc[0]['movieNm'] == '노량: 죽음의 바다'
+    
+def test_unique_parquet():
+    base_path = '/home/ubuntu/data/movies/dailyboxoffice/dt=20240101'
+    a = combine_unique_parquet(base_path)
+    assert len(a)==10
