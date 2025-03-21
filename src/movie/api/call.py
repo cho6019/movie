@@ -80,3 +80,12 @@ def combine_unique_parquet(base_path):
     # 중복 제거
     combined_df = combined_df.drop_duplicates()
     return combined_df
+
+def fill_unique_ranking(df: pd.DataFrame, dt:str) -> pd.DataFrame:
+    df1 = fill_na_with_column(df, 'multiMovieYn')
+    df2 = fill_na_with_column(df1, 'repNationCd')
+    drop_columns=['rnum', 'rank', 'rankInten', 'salesShare']
+    unique_df = gen_unique(df=df2, drop_columns=drop_columns)
+    new_ranking_df = re_ranking(unique_df)
+    new_ranking_df['dt'] = dt
+    return new_ranking_df
